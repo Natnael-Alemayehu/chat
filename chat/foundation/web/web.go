@@ -8,6 +8,8 @@ import (
 	"io/fs"
 	"net/http"
 	"regexp"
+
+	"github.com/google/uuid"
 )
 
 // Encoder defines behavior that can encode a data model and provide
@@ -109,6 +111,7 @@ func (a *App) corsHandler(webHandler HandlerFunc) HandlerFunc {
 func (a *App) HandlerFuncNoMid(method string, group string, path string, handlerFunc HandlerFunc) {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		ctx := setWriter(r.Context(), w)
+		ctx = setTraceID(ctx, uuid.New())
 
 		resp := handlerFunc(ctx, r)
 
@@ -139,7 +142,7 @@ func (a *App) HandlerFunc(method string, group string, path string, handlerFunc 
 
 	h := func(w http.ResponseWriter, r *http.Request) {
 		ctx := setWriter(r.Context(), w)
-
+		ctx = setTraceID(ctx, uuid.New())
 		resp := handlerFunc(ctx, r)
 
 		if err := Respond(ctx, w, resp); err != nil {
@@ -175,6 +178,7 @@ func (a *App) RawHandlerFunc(method string, group string, path string, rawHandle
 
 	h := func(w http.ResponseWriter, r *http.Request) {
 		ctx := setWriter(r.Context(), w)
+		ctx = setTraceID(ctx, uuid.New())
 
 		handlerFunc(ctx, r)
 	}
