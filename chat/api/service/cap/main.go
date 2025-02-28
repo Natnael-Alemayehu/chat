@@ -8,13 +8,14 @@ import (
 	"syscall"
 
 	"github.com/Natnael-Alemayehu/chat/chat/foundation/logger"
+	"github.com/Natnael-Alemayehu/chat/chat/foundation/web"
 )
 
 func main() {
 	var log *logger.Logger
 
 	traceIDFn := func(ctx context.Context) string {
-		return "" // TODO Later for message tracing
+		return web.GetTraceID(ctx).String()
 	}
 
 	log = logger.New(os.Stdout, logger.LevelInfo, "CAP", traceIDFn)
