@@ -75,7 +75,7 @@ func hack1() error {
 		return fmt.Errorf("unexpected message: %s", msg)
 	}
 
-	fmt.Println(msg)
+	fmt.Println(string(msg))
 
 	return nil
 }

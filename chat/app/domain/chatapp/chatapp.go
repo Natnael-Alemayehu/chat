@@ -38,9 +38,7 @@ func (a *app) connect(ctx context.Context, r *http.Request) web.Encoder {
 		return errs.Newf(errs.FailedPrecondition, "Failed handshake: %v", err)
 	}
 
-	return status{
-		Status: "OK",
-	}
+	return web.NewNoResponse()
 }
 
 func (a *app) handshake(ctx context.Context, c *websocket.Conn) (user, error) {
