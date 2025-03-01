@@ -10,15 +10,19 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/Natnael-Alemayehu/chat/chat/app/sdk/errs"
+	"github.com/Natnael-Alemayehu/chat/chat/foundation/logger"
 	"github.com/Natnael-Alemayehu/chat/chat/foundation/web"
 )
 
 type app struct {
-	WS websocket.Upgrader
+	log *logger.Logger
+	WS  websocket.Upgrader
 }
 
-func newApp() *app {
-	return &app{}
+func newApp(log *logger.Logger) *app {
+	return &app{
+		log: log,
+	}
 }
 
 func (a *app) connect(ctx context.Context, r *http.Request) web.Encoder {
@@ -41,6 +45,9 @@ func (a *app) connect(ctx context.Context, r *http.Request) web.Encoder {
 
 func (a *app) handshake(ctx context.Context, c *websocket.Conn) (user, error) {
 
+	a.log.Info(ctx, "Handshaking")
+	defer a.log.Info(ctx, "Finished handshaking")
+
 	err := c.WriteMessage(websocket.TextMessage, []byte("Hello"))
 	if err != nil {
 		return user{}, errs.Newf(errs.FailedPrecondition, "Failed to write Hello message: %v", err)
@@ -49,25 +56,25 @@ func (a *app) handshake(ctx context.Context, c *websocket.Conn) (user, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	msg, err := readMessage(ctx, c)
+	msg, err := a.readMessage(ctx, c)
 	if err != nil {
 		return user{}, errs.Newf(errs.FailedPrecondition, "Failed to get : %v", err)
 	}
 
 	var usr user
-	if err = json.Unmarshal(msg, usr); err != nil {
+	if err = json.Unmarshal(msg, &usr); err != nil {
 		return user{}, errs.Newf(errs.FailedPrecondition, "Failed to unmarshal user: %v", err)
 	}
 
-	welcomeMessage := fmt.Sprintf("Welcome %s", usr.name)
-	if c.WriteMessage(websocket.TextMessage, []byte(welcomeMessage)); err != nil {
+	welcomeMessage := fmt.Sprintf("Welcome %s", usr.Name)
+	if err = c.WriteMessage(websocket.TextMessage, []byte(welcomeMessage)); err != nil {
 		return user{}, errs.Newf(errs.FailedPrecondition, "Failed to write Welcome message: %v", err)
 	}
 
 	return usr, nil
 }
 
-func readMessage(ctx context.Context, c *websocket.Conn) ([]byte, error) {
+func (a *app) readMessage(ctx context.Context, c *websocket.Conn) ([]byte, error) {
 
 	type response struct {
 		msg []byte
@@ -77,6 +84,8 @@ func readMessage(ctx context.Context, c *websocket.Conn) ([]byte, error) {
 	ch := make(chan response, 1)
 
 	go func() {
+		a.log.Info(ctx, "Reading message")
+		defer a.log.Info(ctx, "Finished reading message")
 		_, msg, err := c.ReadMessage()
 		if err != nil {
 			ch <- response{nil, err}

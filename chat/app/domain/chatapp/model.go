@@ -19,5 +19,5 @@ func (app status) Encode() ([]byte, string, error) {
 
 type user struct {
 	ID   uuid.UUID
-	name string
+	Name string
 }
