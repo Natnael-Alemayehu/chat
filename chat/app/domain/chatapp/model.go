@@ -1,6 +1,10 @@
 package chatapp
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/google/uuid"
+)
 
 // User represents information about an individual user.
 type status struct {
@@ -11,4 +15,9 @@ type status struct {
 func (app status) Encode() ([]byte, string, error) {
 	data, err := json.Marshal(app)
 	return data, "application/json", err
+}
+
+type user struct {
+	ID   uuid.UUID
+	name string
 }
