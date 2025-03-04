@@ -4,22 +4,57 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
 	"github.com/Natnael-Alemayehu/chat/chat/app/sdk/errs"
 	"github.com/Natnael-Alemayehu/chat/chat/foundation/logger"
 )
 
+var ErrUserExists = fmt.Errorf("user already exists")
+var ErrUserNotExists = fmt.Errorf("user doesn't exist ")
+
 type Chat struct {
-	log *logger.Logger
+	log   *logger.Logger
+	users map[uuid.UUID]*websocket.Conn
+	wg    sync.RWMutex
 }
 
 func New(log *logger.Logger) *Chat {
 	return &Chat{
 		log: log,
 	}
+}
+
+// AddUser adds a user to the chat. If the user exists, it returns an error.
+func (c *Chat) AddUser(usr User, conn *websocket.Conn) error {
+	c.wg.Lock()
+	defer c.wg.Unlock()
+
+	if _, exists := c.users[usr.ID]; exists {
+		return ErrUserExists
+	}
+
+	c.users[usr.ID] = conn
+
+	return nil
+}
+
+// RemoveUser removes a user from a chat. If a user doesn't exist, it returns an error
+func (c *Chat) RemoveUser(usr User, conn *websocket.Conn) error {
+	c.wg.Lock()
+	defer c.wg.Unlock()
+
+	if _, exists := c.users[usr.ID]; exists {
+		return ErrUserNotExists
+	}
+
+	delete(c.users, usr.ID)
+
+	return nil
 }
 
 func (c *Chat) Handshake(ctx context.Context, conn *websocket.Conn) (User, error) {

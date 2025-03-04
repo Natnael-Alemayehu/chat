@@ -15,13 +15,13 @@ import (
 type app struct {
 	log  *logger.Logger
 	WS   websocket.Upgrader
-	Chat *chat.Chat
+	chat *chat.Chat
 }
 
 func newApp(log *logger.Logger) *app {
 	return &app{
 		log:  log,
-		Chat: chat.New(log),
+		chat: chat.New(log),
 	}
 }
 
@@ -33,7 +33,7 @@ func (a *app) connect(ctx context.Context, r *http.Request) web.Encoder {
 	}
 	defer c.Close()
 
-	_, err = a.Chat.Handshake(ctx, c)
+	_, err = a.chat.Handshake(ctx, c)
 	if err != nil {
 		return errs.Newf(errs.FailedPrecondition, "Failed handshake: %v", err)
 	}
